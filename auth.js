@@ -14,6 +14,8 @@ function hydrateAccount(state){
  DATA.questions=[...keys].map(k=>bank.get(k)).filter(Boolean).map(q=>({...q,collect:state.stars?.[q.key]?'true':null,practice_wrong:!!q.practiceAnswer&&q.practiceAnswer!==q.question_answer,mock_wrong:!!q.personalAnswer&&q.personalAnswer!==q.question_answer,platform_wrong:(state.examWrong||[]).includes(q.key)}));
  const imported=state.importedQuestions||[];DATA.summary={...DATA.summary,...state.importSummary,total:DATA.questions.length,stars:DATA.questions.filter(q=>state.stars?.[q.key]).length};
  DATA.importedAt=state.importedAt||DATA.importedAt;
+ DATA.summary.audio=new Set(DATA.questions.map(q=>q.audio).filter(Boolean)).size;
+ DATA.summary.images=new Set(DATA.questions.flatMap(q=>[q.question_image,q.explanation_image]).filter(Boolean)).size;
  if(state.importTests)DATA.tests=state.importTests;
 }
 function mergeLearning(base,local,remote){const merged=clone(remote),mapFields=['reviews','notes','reasons','stars','uncertain','importedAnswers'];

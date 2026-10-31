@@ -28,7 +28,7 @@ function jumpExam(i){if(!exam||!examQs()[i]||!accessible(examQs()[i])||i===exam.
 function moveExam(d){jumpExam(exam.index+d)}
 function stopExamAudio(){examAudio.pause();examAudio.removeAttribute('src');examAudio.load()}
 function audioGroups(){return [...new Map(examQs().filter(q=>q.audio).map(q=>[q.audio,q])).values()].sort((a,b)=>+a.question_order-+b.question_order)}
-function playFullAudio(){if(!exam||exam.phase!=='listening')return;const groups=audioGroups(),q=groups[exam.audioIndex||0];if(!q){enterReading();return}if(examAudio.getAttribute('src')!==q.audio){examAudio.src=q.audio;examAudio.currentTime=exam.audioTime||0}examAudio.play().catch(()=>toast('请再次点击播放，或检查浏览器音频权限'));updateClock()}
+function playFullAudio(){if(!exam||exam.phase!=='listening')return;const groups=audioGroups(),q=groups[exam.audioIndex||0];if(!q){enterReading();return}if(examAudio.getAttribute('src')!==q.audio){examAudio.src=q.audio;examAudio.currentTime=exam.audioTime||0}const source=examAudio.getAttribute('src');examAudio.play().catch(e=>{if(e.name!=='AbortError'&&examAudio.getAttribute('src')===source)toast('请再次点击播放，或检查浏览器音频权限')});updateClock()}
 examAudio.addEventListener('timeupdate',()=>{if(exam&&exam.phase==='listening'){exam.audioTime=examAudio.currentTime;persistExam()}});
 examAudio.addEventListener('ended',()=>{if(!exam||exam.phase!=='listening')return;exam.audioIndex++;exam.audioTime=0;const q=audioGroups()[exam.audioIndex];if(!q){enterReading();return}exam.index=examQs().findIndex(r=>r.audio===q.audio);persistExam();if(page==='examrun')render();playFullAudio()});
 examAudio.addEventListener('error',()=>{if(exam)toast('听力文件未能播放，请检查 audio 文件夹')});
