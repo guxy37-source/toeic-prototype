@@ -1,0 +1,6 @@
+.git
+.qa-profile*
+node_modules
+*.log
+*.tar
+*.tar.gz

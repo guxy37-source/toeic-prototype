@@ -16,4 +16,4 @@ http.createServer((req,res)=>{
   }
   headers['Content-Length']=end-start+1;res.writeHead(status,headers);if(req.method==='HEAD')return res.end();fs.createReadStream(p,{start,end}).on('error',()=>res.destroy()).pipe(res);
  });
-}).listen(port,'127.0.0.1',()=>console.log(`拾分：http://127.0.0.1:${port}`));
+}).listen(port,process.env.HOST||'127.0.0.1',()=>console.log(`拾分：http://${process.env.HOST||'127.0.0.1'}:${port}`));
