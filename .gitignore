@@ -1,0 +1,12 @@
+node_modules/
+.qa-profile*/
+.env
+.env.*
+!.env.example
+*.log
+*.zip
+*source.json
+*学习记录*.json
+backups/
+.DS_Store
+Thumbs.db
