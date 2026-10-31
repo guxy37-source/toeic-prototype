@@ -8,5 +8,12 @@ node_modules/
 *source.json
 *学习记录*.json
 backups/
+!backups/
+backups/*
+!backups/*.enc.json
 .DS_Store
 Thumbs.db
+
+private-data/
+*.key
+*plaintext*

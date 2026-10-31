@@ -1,0 +1,23 @@
+const assert=require('assert/strict'),fs=require('fs'),os=require('os'),path=require('path'),{spawn}=require('child_process');
+const dir=fs.mkdtempSync(path.join(os.tmpdir(),'shifen-accounts-'));
+const child=spawn(process.execPath,[path.resolve(__dirname,'../server/index.cjs')],{env:{...process.env,PORT:'0',HOST:'127.0.0.1',DATA_DIR:dir},windowsHide:true,stdio:['ignore','pipe','pipe']});
+let base;const ready=new Promise((resolve,reject)=>{child.stdout.on('data',b=>{const m=String(b).match(/http:\/\/127\.0\.0\.1:(\d+)/);if(m){base='http://127.0.0.1:'+m[1];resolve()}});child.once('exit',c=>reject(Error('Server exited '+c)));child.stderr.on('data',()=>{})});
+async function req(url,method='GET',body,cookie,extra={}){const r=await fetch(base+url,{method,headers:{'Content-Type':'application/json',...(cookie?{Cookie:cookie}:{}),...extra},...(body?{body:JSON.stringify(body)}:{})});return {status:r.status,cookie:r.headers.get('set-cookie'),body:await r.json()}}
+(async()=>{await ready;assert.equal((await req('/api/state')).status,401);
+ const a=await req('/api/register','POST',{username:'user_one',password:'test-pass-one'});assert.equal(a.status,200);assert(a.cookie.includes('HttpOnly'));assert(a.cookie.includes('SameSite=Lax'));const ac=a.cookie.split(';')[0];
+ const b=await req('/api/register','POST',{username:'user_two',password:'test-pass-two'}),bc=b.cookie.split(';')[0];assert.equal(b.status,200);assert.notEqual(a.body.user.id,b.body.user.id);
+ const one=await req('/api/state','GET',null,ac);assert.equal(one.body.revision,1);one.body.state.notes['5:108']='account one note';
+ assert.equal((await req('/api/state','PUT',{revision:1,state:one.body.state},ac)).status,200);
+ assert.equal((await req('/api/state','GET',null,bc)).body.state.notes['5:108'],undefined);
+ assert.equal((await req('/api/state','PUT',{revision:1,state:{}},ac)).status,409);
+ assert.equal((await req('/api/state','PUT',{revision:2,state:{}},ac,{Origin:'https://untrusted.example'})).status,403);
+ const disk=fs.readFileSync(path.join(dir,'users.json'),'utf8');assert(!disk.includes('test-pass-one'));assert(disk.includes('salt'));
+ assert.equal((await req('/api/login','POST',{username:'user_one',password:'wrong'})).status,401);
+ assert.equal((await req('/api/login','POST',{username:'user_one',password:'test-pass-one'})).status,200);
+ assert.equal((await req('/api/password','POST',{currentPassword:'test-pass-one',newPassword:'changed-pass-one'},ac)).status,200);
+ assert.equal((await req('/api/login','POST',{username:'user_one',password:'test-pass-one'})).status,401);
+ assert.equal((await req('/api/login','POST',{username:'user_one',password:'changed-pass-one'})).status,200);
+ const hidden=await fetch(base+'/server/storage.cjs');assert.equal(hidden.status,403);
+ await req('/api/logout','POST',{},ac);assert.equal((await req('/api/state','GET',null,ac)).status,401);
+ console.log('PASS: account isolation, password hashing, cookie flags, conflict detection, CSRF protection, login/logout, private paths.');
+})().catch(e=>{console.error(e);process.exitCode=1}).finally(()=>child.kill());

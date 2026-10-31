@@ -3,9 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "description": "拾分：本地优先的 TOEIC 练习、模拟考试与错题复习平台",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
-    "start": "node scripts/serve.cjs",
-    "test": "node tests/validate.cjs"
+    "start": "node server/index.cjs",
+    "test": "node tests/validate.cjs && node tests/accounts.cjs"
   }
 }
